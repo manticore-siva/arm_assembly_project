@@ -1,0 +1,92 @@
+///////////////////////////////////////////////////////////
+//                                                       //
+//   Authore Name : Sivaprakasam.v                       //
+//   Title : ARM instructions ADC(add with carry)        //
+//   Date  : 22/02/2023                                  //
+//                                                       // 
+///////////////////////////////////////////////////////////
+
+
+
+//Clock configuration
+
+
+	LDR R0,=0x40023800    //RCC base address  [default ONHSI]
+	LDR R1,[R0,#0X30]
+	MOV R2,#1
+	BFI R1,R2,#2,#1
+	STR R1,[R0,0X30]      //Set clock to C port
+
+//////////////////////////////////////////////////SYSTIC DELAY///////////
+
+	LDR R5,=0xE000E014   // Base address of SysTick Reload Value Register, SYST_RVR
+	LDR R6,=16000000     //16Mhz 1 sec delay value
+	STR R6,[R5]          // count value load to RVR register
+
+	LDR R5,=0xE000E010    //Base address of SysTick Control and Status Register, SYST_CSR
+	MOV R6,#5
+	STR R6,[R5]          //Select internal clock,enable Systic count
+
+
+
+///// GPIOC configuration
+
+    LDR R0,=0x40020800    //Base address of GPIOC
+    LSL R2,R2,#26
+    STR R2,[R0,#0X00]     // set pin C13 out put
+
+ ///////////////////////////////////////////////
+
+ ///GPIO port output data register
+START:
+//LED OFF
+ 	LDR R1,[R0,0x14]
+ 	MOV R2,#1
+ 	BFI R1,R2,#13,#1
+ 	STR R1,[R0,#0x14]
+
+ ///////////////SYSTIC DELAY///////////
+
+	LDR R5,=0xE000E014   // Base address of SysTick Reload Value Register, SYST_RVR
+	LDR R6,=16000000     //16Mhz 1 sec delay value
+	STR R6,[R5]          // count value load to RVR register
+
+	LDR R5,=0xE000E010    //Base address of SysTick Control and Status Register, SYST_CSR
+	MOV R6,#5
+	STR R6,[R5]          //Select internal clock,enable Systic count
+
+/////////////////////////////////////
+	MOV R6,#1
+	LSL R6,R6,#16
+LOOP:
+	LDR R4,[R5]
+	TST R4,R6
+	IT EQ
+	BEQ LOOP
+
+//LED ON
+
+	LDR R1,[R0,0x14]
+ 	BFC R1,#13,#1
+ 	STR R1,[R0,#0x14]
+
+///////////////SYSTIC DELAY///////////
+
+	LDR R5,=0xE000E014   // Base address of SysTick Reload Value Register, SYST_RVR
+	LDR R6,=16000000     //16Mhz 1 sec delay value
+	STR R6,[R5]          // count value load to RVR register
+
+	LDR R5,=0xE000E010    //Base address of SysTick Control and Status Register, SYST_CSR
+	MOV R6,#5
+	STR R6,[R5]          //Select internal clock,enable Systic count
+
+/////////////////////////////////////
+	MOV R6,#1
+	LSL R6,R6,#16
+LOOP1:
+	LDR R4,[R5]
+	TST R4,R6
+	IT EQ
+	BEQ LOOP1
+
+	B START
