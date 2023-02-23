@@ -96,7 +96,7 @@ RUN AN UPLOAD PROGRAM STEPS
 1> open a new terminal goto the arm_install_working _folder and type command "openocd"
 2> open a new terminal goto the arm_install_working _folder
 3> open main.c  write c program
-4> complie gcc 
+4> complie "make"   note not gcc complier 
 5> after type the command "arm-none-eabi-gdb stm32f401ccux.elf"
 6> after type the command "target remote : 3333"
 7> final type the command "load"
