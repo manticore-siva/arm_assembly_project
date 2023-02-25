@@ -1,0 +1,99 @@
+/////////////////////////////////////////////////////////////////////////////
+//                                                                         //
+//   Authore Name : Sivaprakasam.v                                         //
+//   Title : ARM Assembly Systic Delay LED Blinking(HSE clock sourcr)      //
+//   Date  : 22/02/2023                                                    //
+//                                                                         // 
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+//clock configuration
+
+	LDR R0,=0x40023800   //Base address of RCC
+	LDR R2,[R0,#0X00]
+	MOV R1,#1
+	LSL R1,R1,#16
+	ORR R2,R1,R2
+	STR R2,[R0,#0X00]   //HSE clock enable
+
+	MOV R1,#1
+	LDR R2,[R0,0x30]
+	BFI R2,R1,#2,#1
+	STR R2,[R0,0X30]   //GPIOCEN: IO port C clock enable
+
+	LDR R2,[R0,0X08]   //RCC clock configuration register (RCC_CFGR)
+	MOV R1,0X803
+	ORR R2,R2,R1
+	STR R2,[R0,0X08]  //System clock switch,: System clock switch status,AHB prescaler[system clock divided by 2]
+
+/////////////////////////////////////////////////
+
+
+
+// C port configutation
+
+	LDR R0,=0x40020800    //GPIOC base address
+	LDR R2,[R0,0X00]
+	MOV R1,#1
+	LSL R1,R1,#26
+	ORR R2,R1
+	STR R2,[R0,#0X00]    //General purpose output mode
+
+
+START:
+
+//Set value
+
+	LDR R2,[R0,0X14]    //GPIO port output data register (GPIOx_ODR)
+	MOV R1,#1
+	BFI R2,R1,#13,#1
+	STR R2,[R0,0X14]    //LED off
+
+//systic delay
+
+	LDR R3,=0xE000E014   // SysTick Reload Value Register, SYST_RVR
+	LDR R4,=12000000     // Count value
+	STR R4,[R3]          //Reload count value
+
+	LDR R3,=0xE000E010    // SysTick Control and Status Register, SYST_CSR
+	MOV R4,#1
+	STR R4,[R3]           //Enable count
+
+LOOP:
+	LDR R5,[R3]
+	MOV R4,#1
+	LSL R4,R4,#16
+	TST R5,R4
+	IT EQ
+	BEQ LOOP
+
+
+	BFC R2,#13,#1
+	STR R2,[R0,0X14]    //LED on
+
+
+//systic delay
+
+	LDR R3,=0xE000E014   // SysTick Reload Value Register, SYST_RVR
+	LDR R4,=12000000     // Count value  12Mhz 
+	STR R4,[R3]          //Reload count value
+
+	LDR R3,=0xE000E010    // SysTick Control and Status Register, SYST_CSR
+	MOV R4,#1
+	STR R4,[R3]           //Enable count
+
+LOOP1:
+	LDR R5,[R3]
+	MOV R4,#1
+	LSL R4,R4,#16
+	TST R5,R4
+	IT EQ
+	BEQ LOOP1
+
+	B START
+
+
+END: B END
