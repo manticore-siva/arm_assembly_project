@@ -1,0 +1,88 @@
+
+/////////////////////////////////////////////////////////////////////////////
+//                                                                         //
+//   Authore Name : Sivaprakasam.v                                         //
+//   Title : ARM Assembly Systic Delay LED Blinking used to RCC_PLL        //
+//   Date  : 28/02/2023                                                    //
+//                                                                         // 
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+
+///PORT CONFIGURATION ADDRESS
+
+volatile unsigned int *RCC_BASE    = (volatile unsigned int *)0x40023800;          //Base address of RCC
+volatile unsigned int *RCC_CFGR    = (volatile unsigned int *)0x40023808;          ////RCC clock configuration register (RCC_CFGR)
+volatile unsigned int *RCC_AHB1    = (volatile unsigned int *)0x40023830;         // peripheral clock enable register (RCC_AHB1ENR)
+volatile unsigned int *GPIOC_MODER = (volatile unsigned int *)0x40020800;         // GPIO port mode register (GPIOC_MOvolitle int *GPIOC_ODR   = (unsigned int *)0x40020814;         // GPIO port output data register (GPIOx_ODR)
+volatile unsigned int *GPIOC_ODR   = (volatile unsigned int *)0x40020814;         // GPIO port mode register (GPIOC_MOvolitle int *GPIOC_ODR   = (unsigned int *)0x40020814;         // GPIO port output data register (GPIOx_ODR)
+volatile unsigned int *PLL_CFRG    = (volatile unsigned int *)0x40023804;         //Pll configuration address
+
+//SYSTIC CONFIGUARATION ADDRESS
+
+volatile unsigned int *SYST_RVR    = (volatile unsigned int *)0xE000E014;         // SysTick Reload Value Register, SYST_RVR
+volatile unsigned int *SYST_CSR    = (volatile unsigned int *)0xE000E010;         // SysTick Control and Status Register, SYST_CSR
+
+void systic_timer(void);
+void pll_config(void);
+
+int main()
+{
+                pll_config();
+                
+                *RCC_BASE = *RCC_BASE | (1<<16) ;              // HSE Enable
+
+                *RCC_AHB1 = *RCC_AHB1 | (1<<2);               // GPIOCEN: IO port C clock enable
+
+                *RCC_CFGR = *RCC_CFGR | 0x05;                // System clock switch,: System clock switch status,AHB prescaler[system clock divided by nothing]
+
+               *GPIOC_MODER = *GPIOC_MODER | (1<<26);        // General purpose output mode
+
+
+                while(1)
+                {
+                        *GPIOC_ODR = *GPIOC_MODER & ~( 1<<13 );  //LED off
+
+                        systic_timer();
+
+                        *GPIOC_ODR = *GPIOC_MODER | (1 << 13);   // LED on
+
+                        systic_timer();  
+                }
+
+
+
+
+}
+
+void systic_timer(void)
+{
+        *SYST_RVR  = 80000000;                 //RVR Reload value 80 Mhz
+
+        *SYST_CSR  = *SYST_CSR | 1<<0;       // Enable counter
+
+        *SYST_CSR =  *SYST_CSR | 1<<2;
+
+        while((*SYST_CSR & (1<<16))==0);      //waiting for flag update
+
+
+}
+
+void pll_config(void)
+{
+                *PLL_CFRG = *PLL_CFRG | 0x15019;           //  M = 25,N = 320,P = 4
+
+                *RCC_BASE = *RCC_BASE | (1<<24); // PLL enable
+                while((*RCC_BASE & (1<<25))==0);   //0: No clock ready interrupt caused by the HSE oscillator, Clock ready interrupt caused by the HSE oscillator
+                *RCC_BASE = *RCC_BASE | (1<<16) ;              // HSE Enable
+
+                *RCC_AHB1 = *RCC_AHB1 | (1<<2);               // GPIOCEN: IO port C clock enable
+
+                *RCC_CFGR = *RCC_CFGR | 0x05;                // System clock switch,: System clock switch status,AHB prescaler[system clock divided by nothing]
+
+                *GPIOC_MODER = *GPIOC_MODER | (1<<26);        // General purpose output mode
+
+}
