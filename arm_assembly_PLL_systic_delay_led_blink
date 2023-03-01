@@ -1,0 +1,124 @@
+/////////////////////////////////////////////////////////////////////////////
+//                                                                         //
+//   Authore Name : Sivaprakasam.v                                         //
+//   Title : ARM Assembly Systic Delay LED Blinking used to RCC_PLL        //
+//   Date  : 01/03/2023                                                    //
+//                                                                         // 
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+  LDR R0,=0x40023800 // RCC base address
+	LDR R1,[R0,#0X00]
+	MOV R3,#1
+	LSL R3,R3,#16
+	ORR R1,R3
+	STR R1,[R0,#0X00]  // HSE enable
+
+	LDR R0,=0X40023800
+	LDR R1,[R0,#0X30]
+	MOV R3,#4
+	ORR R1,R3
+	STR R1,[R0,#0X30]  // GPIOC clock enable
+
+////////////////////////
+
+// PLL configuration
+
+	LDR R0,=0x40023800      // RCC BASE ADDRESS
+	LDR R1,[R0,#0X00]
+	BFC R1,#24,#1
+	STR R1,[R0,#0X04]   	// PLL OFF
+
+	LDR R1,[R0,#0X04]
+	LDR R3,=0X15019       	// P,N,M values
+	ORR R1,R3
+	STR R1,[R0,#0X04]    	// P,N,M value load
+
+	LDR R1,[R0,#0X00]
+	MOV R2,#1
+	BFI R1,R2,#24,#1
+	STR R1,[R0,#0X00]    	// PLL ON
+
+	MOV R2,#1
+	LSL R2,R2,#25
+
+REDY_FLG:
+		LDR R1,[R0]
+		TST R1,R2
+		BEQ REDY_FLG
+
+//////////////////////////////
+
+// C PORT CONFIG
+
+	LDR R0,=0x40020800    //C PORT BASE ADDRESS
+	LDR R1,[R0,#0X00]
+	MOV R2,#1
+	LSL R2,R2,#26
+	ORR R1,R2
+	STR R1,[R0,#0X00]    // C13 OUT PUT MODE
+
+
+//////////////////////////////////
+START:
+/// C 13 VALUE
+
+	LDR R0,=0x40020800
+	LDR R1,[R0,#0X14]
+	MOV R2,#1
+	BFI R1,R2,#13,#1
+	STR R1,[R0,#0X14]    // LED OFF
+
+//////////// SYSTIC TIMER
+
+	LDR R0,=0xE000E014  // RVR ADDRESS
+	LDR R1,=80000000    // COUNT VALUE  80 Mhz 80000000 = 1 sec delay
+	ORR R1,R0
+	STR R1,[R0]         // COUNT VALUE LOADED TO RVR REGISTER
+
+	LDR R2,=0xE000E010  // CSR REGISTER ADDRESS
+	MOV R1,#5
+	ORR R1,R0
+	STR R1,[R2]         // ENABLE COUNT
+
+	MOV R1,#1
+	LSL R1,R1,#16
+
+COND1:
+		LDR R3,[R2]
+		TST R3,R1
+		IT EQ
+		BEQ COND1
+
+
+	LDR R0,=0x40020800
+	LDR R1,[R0,#0X14]
+	MOV R2,#1
+	BFC R1,#13,#1
+	STR R1,[R0,#0X14]    // LED ON
+
+	//////////// SYSTIC TIMER
+
+	LDR R0,=0xE000E014  // RVR ADDRESS
+	LDR R1,=80000000    // COUNT VALUE
+	ORR R1,R0
+	STR R1,[R0]         // COUNT VALUE LOADED TO RVR REGISTER
+
+	LDR R2,=0xE000E010  // CSR REGISTER ADDRESS
+	MOV R1,#5
+	ORR R1,R0
+	STR R1,[R2]         // ENABLE COUNT
+
+	MOV R1,#1
+	LSL R1,R1,#16
+
+COND2:
+		LDR R3,[R2]
+		TST R3,R1
+		IT EQ
+		BEQ COND2
+
+	    B START
+
+END: B END
