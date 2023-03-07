@@ -80,7 +80,7 @@ void delay_timer10()
 	*TIM_CNT = 0;  
 
 	//Set prescaler value
-	*TIM_PSC = 25000;
+	*TIM_PSC = 31520;             //1.88sec
 
 	//Set reload value
 	*TIM_ARR = 1000;
