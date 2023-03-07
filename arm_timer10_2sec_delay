@@ -1,0 +1,109 @@
+///////////////////////////////////////////////////////////
+//                                                       //
+//   Authore Name : Sivaprakasam.v                       //
+//   Title : ARM TIMER10_2sec_delay                      //
+//   Date  : 07/03/2023                                  //
+//                                                       // 
+///////////////////////////////////////////////////////////
+
+
+
+//select the  configiration register
+volatile unsigned int *RCC_AHB1ENR  = (volatile unsigned int *)0x40023830; /*RCC AHB1 peripheral clock enable register */
+volatile unsigned int *RCC_APB2ENR  = (volatile unsigned int *)0x40023844; /*RCC APB2 peripheral clock enable register */
+volatile unsigned int *GPIOC_MODER  = (volatile unsigned int *)0x40020800; /*GPIO port mode register*/
+volatile unsigned int *GPIOC_ODR    = (volatile unsigned int *)0x40020814; /*GPIO port output data register*/
+volatile unsigned int *TIM_CTRL     = (volatile unsigned int *)0x40014400; /*TIM10  control register 1 */
+volatile unsigned int *TIM_EVT      = (volatile unsigned int *)0x40014414; /* TIM event generation register */
+volatile unsigned int *TIM_CNT      = (volatile unsigned int *)0x40014424; /*TIM10  counter */
+volatile unsigned int *TIM_PSC      = (volatile unsigned int *)0x40014428; /* TIME10 prescaler */
+volatile unsigned int *TIM_ARR      = (volatile unsigned int *)0x4001442c; /* auto-reload register  */
+volatile unsigned int *TIM_STA      = (volatile unsigned int *)0x40014410; /* auto-reload register  */
+#define LED_ON 0
+#define LED_OFF 1
+void rcc_config(void);
+void portc_config(void);
+void delay_timer10(void);
+
+
+int main()
+{
+        // configure RCC
+        rcc_config();
+        // congigure PortC
+        portc_config();
+ 
+        //loop start
+        while (1) {
+        //led OFF
+                *GPIOC_ODR = *GPIOC_ODR | (LED_OFF<<13);
+
+        //delay 2seconds
+                delay_timer10();
+
+        //led ON
+                *GPIOC_ODR = *GPIOC_ODR &(LED_ON<<13);
+
+        //delay 2seconds
+                delay_timer10();
+        //loop end
+        }
+}
+
+
+void rcc_config()
+{
+	// Enable port C clock
+	*RCC_AHB1ENR = *RCC_AHB1ENR | 0x4;   
+
+    //Enable TIMER10
+	*RCC_APB2ENR = *RCC_APB2ENR | (1<<17);  
+
+}
+
+void portc_config()
+{
+	//GPIOC_MODER set as output mode
+	*GPIOC_MODER = *GPIOC_MODER | (1<<26);
+
+}
+
+void delay_timer10()
+{
+	//Enable Update disable
+	*TIM_CTRL = *TIM_CTRL | (1<<1);
+
+	//clear UIF status
+	*TIM_STA = *TIM_STA * ~(1<<0);
+
+	//Set count value
+	*TIM_CNT = 0;  
+
+	//Set prescaler value
+	*TIM_PSC = 25000;
+
+	//Set reload value
+	*TIM_ARR = 1000;
+
+	//Update disable OFF
+	*TIM_CTRL = *TIM_CTRL & ~(1<<1); 
+
+	//Update request source
+	*TIM_CTRL = *TIM_CTRL | (1<<2);
+
+	//Auto-reload preload enable
+	*TIM_CTRL = *TIM_CTRL | (1<<7);
+
+	//Counter enable
+	*TIM_CTRL = *TIM_CTRL | 1;
+
+	// condition
+	  
+	while((*TIM_STA & 1)==0);
+	//clear UIF status
+//	*TIM_STA = *TIM_STA * ~(1<<0);
+
+	 //Counter disable
+	*TIM_CTRL = *TIM_CTRL & 0;
+
+}
