@@ -49,3 +49,4 @@
           *SYST_CSR  = *SYST_CSR | 1<<0 ;       // Enable counter
   
           while((*SYST_CSR & (1<<16))==0);      //waiting for flag update
+}
